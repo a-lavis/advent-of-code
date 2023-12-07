@@ -89,9 +89,7 @@ class Schematic
         next if out_of_bounds(column, row)
 
         case @grid[row][column]
-        when /\d/
-          next
-        when '.'
+        when /\d/, '.'
           next
         when '*'
           @current_gears << Gear.new(column:, row:)
