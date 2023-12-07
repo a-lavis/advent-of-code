@@ -33,14 +33,13 @@ STRING_TO_DIGIT = {
   '9' => '9'
 }.freeze
 
-DIGIT_REGEX = /#{STRING_TO_DIGIT.keys.join('|')}/.freeze
+DIGIT_REGEX = /#{STRING_TO_DIGIT.keys.join('|')}/
 
 def get_calibration_value(stringy)
-  index = 0
   digits = []
-  while index = stringy.index(DIGIT_REGEX) do
+  while (index = stringy.index DIGIT_REGEX)
     digits << stringy.match(DIGIT_REGEX)[0]
-    stringy = stringy[index+1, stringy.length-1]
+    stringy = stringy[index + 1, stringy.length - 1]
   end
 
   STRING_TO_DIGIT.fetch(digits[0]) + STRING_TO_DIGIT.fetch(digits[-1])
