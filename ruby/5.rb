@@ -12,11 +12,19 @@ file = File.open(filename)
 content = file.readlines
 file.close
 
-# -------------------------------------------------------------------
-# The code for Part 2 is only performant on Ruby >= v3.3.0-preview3
-# It is not performant on Ruby <= v3.3.0-preview2
-# I haven't figured out why yet!
-# -------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# The code for Part 2 is only performant on Ruby >= v3.3.0-preview3.
+# It is not performant on Ruby <= v3.3.0-preview2.
+#
+# This is because of the following:
+# https://github.com/ruby/ruby/commit/6ae2996e291750bab4ff59a06ba11c8d6bbe5aaa
+#
+# I'm not using the Range objects as enumerators, so I could just Data.define
+# a simpler data structure that just stores the start and end, and then define
+# a instance method called "count" that just subtracts the start from the end,
+# with negative values coerced to 0. This would allow this code to be
+# performant on older versions of Ruby.
+# -----------------------------------------------------------------------------
 
 MapRange = Data.define(:destination_begin, :source_begin, :length) do
   def source_end
