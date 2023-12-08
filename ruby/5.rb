@@ -13,18 +13,27 @@ content = file.readlines
 file.close
 
 # -----------------------------------------------------------------------------
-# The code for Part 2 is only performant on Ruby >= v3.3.0-preview3.
-# It is not performant on Ruby <= v3.3.0-preview2.
+# `Range#count` is only performant enough for Part 2 on Ruby >= v3.3
 #
 # This is because of the following:
 # https://github.com/ruby/ruby/commit/6ae2996e291750bab4ff59a06ba11c8d6bbe5aaa
 #
-# I'm not using the Range objects as enumerators, so I could just Data.define
-# a simpler data structure that just stores the start and end, and then define
-# a instance method called "count" that just subtracts the start from the end,
-# with negative values coerced to 0. This would allow this code to be
-# performant on older versions of Ruby.
+# I don't need the enumerator functionality of `Range` objects, so I can just
+# define my own simpler data structure: `NumRange`.
 # -----------------------------------------------------------------------------
+
+NumRange = Data.define(:first, :last) do
+  def count
+    result = last - first
+    return 0 if result.negative?
+
+    result
+  end
+
+  def include?(value)
+    first <= value && value <= last
+  end
+end
 
 MapRange = Data.define(:destination_begin, :source_begin, :length) do
   def source_end
@@ -32,7 +41,7 @@ MapRange = Data.define(:destination_begin, :source_begin, :length) do
   end
 
   def source_range
-    source_begin..source_end
+    NumRange.new(first: source_begin, last: source_end)
   end
 
   def include?(given_value)
@@ -58,7 +67,7 @@ MapRange = Data.define(:destination_begin, :source_begin, :length) do
     # There is no overlap between given and source.
     return given_range if given_end < source_begin
 
-    lower_range = given_begin..source_begin
+    lower_range = NumRange.new(first: given_begin, last: source_begin)
     return nil if lower_range.count.zero?
 
     lower_range
@@ -78,7 +87,7 @@ MapRange = Data.define(:destination_begin, :source_begin, :length) do
     # There is no overlap between given and source.
     return given_range if source_end < given_begin
 
-    upper_range = source_end..given_end
+    upper_range = NumRange.new(first: source_end, last: given_end)
     return nil if upper_range.count.zero?
 
     upper_range
@@ -88,10 +97,16 @@ MapRange = Data.define(:destination_begin, :source_begin, :length) do
     given_begin = given_range.first
     given_end = given_range.last
 
-    overlap_range = ([given_begin, source_begin].max)..([given_end, source_end].min)
+    overlap_range = NumRange.new(
+      first: [given_begin, source_begin].max,
+      last: [given_end, source_end].min
+    )
     return nil if overlap_range.count.zero?
 
-    corresponding_for(overlap_range.first)..corresponding_for(overlap_range.last)
+    NumRange.new(
+      first: corresponding_for(overlap_range.first),
+      last: corresponding_for(overlap_range.last)
+    )
   end
 end
 
@@ -173,7 +188,9 @@ Almanac = Data.define(:seeds, :maps) do
   end
 
   def seed_ranges
-    seeds.each_slice(2).map { |start, length| start..start + length - 1 }
+    seeds.each_slice(2).map do |start, length|
+      NumRange.new(first: start, last: start + length - 1)
+    end
   end
 
   def lowest_location_for_seed_ranges
