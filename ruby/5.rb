@@ -12,18 +12,78 @@ file = File.open(filename)
 content = file.readlines
 file.close
 
-MapRange = Data.define(:destination, :source, :length) do
+# -------------------------------------------------------------------
+# The code for Part 2 is only performant on Ruby >= v3.3.0-preview3
+# It is not performant on Ruby <= v3.3.0-preview2
+# I haven't figured out why yet!
+# -------------------------------------------------------------------
+
+MapRange = Data.define(:destination_begin, :source_begin, :length) do
+  def source_end
+    source_begin + length - 1
+  end
+
   def source_range
-    source..source + length - 1
+    source_begin..source_end
   end
 
-  def include?(source_value)
-    source_range.include?(source_value)
+  def include?(given_value)
+    source_range.include?(given_value)
   end
 
-  def corresponding_for(source_value)
-    delta = source_value - source
-    destination + delta
+  def corresponding_for(given_value)
+    delta = given_value - source_begin
+    destination_begin + delta
+  end
+
+  def lower_range_for(given_range)
+    given_begin = given_range.first
+    given_end = given_range.last
+
+    #  given:  |---...
+    # source: |----...
+    # There is no part of given less than source.
+    return nil if source_begin <= given_begin
+
+    #  given: ...---|
+    # source:         |---...
+    # There is no overlap between given and source.
+    return given_range if given_end < source_begin
+
+    lower_range = given_begin..source_begin
+    return nil if lower_range.count.zero?
+
+    lower_range
+  end
+
+  def upper_range_for(given_range)
+    given_begin = given_range.first
+    given_end = given_range.last
+
+    #  given: ...----|
+    # source: ...---|
+    # There is no part of given less than source.
+    return nil if given_end <= source_end
+
+    #  given:         |---...
+    # source: ...---|
+    # There is no overlap between given and source.
+    return given_range if source_end < given_begin
+
+    upper_range = source_end..given_end
+    return nil if upper_range.count.zero?
+
+    upper_range
+  end
+
+  def destination_range_for(given_range)
+    given_begin = given_range.first
+    given_end = given_range.last
+
+    overlap_range = ([given_begin, source_begin].max)..([given_end, source_end].min)
+    return nil if overlap_range.count.zero?
+
+    corresponding_for(overlap_range.first)..corresponding_for(overlap_range.last)
   end
 end
 
@@ -34,6 +94,40 @@ Map = Data.define(:ranges) do
     return source_value if range.nil?
 
     range.corresponding_for(source_value)
+  end
+
+  def corresponding_ranges(source_ranges)
+    source_ranges.flat_map do |source_range|
+      corresponding_ranges_for_source_range(source_range)
+    end
+  end
+
+  def corresponding_ranges_for_source_range(original_source_range)
+    ranges.reduce([[original_source_range], []]) do |map_ranges_acc, map_range|
+      source_ranges, destination_ranges = map_ranges_acc
+
+      new_source_ranges, new_destination_ranges = corresponding_ranges_for_map_range(
+        source_ranges,
+        map_range
+      )
+
+      [new_source_ranges, destination_ranges + new_destination_ranges]
+    end.flatten(1)
+  end
+
+  def corresponding_ranges_for_map_range(source_ranges, map_range)
+    source_ranges.reduce([[], []]) do |source_ranges_acc, source_range|
+      upper_and_lower_ranges, destination_ranges = source_ranges_acc
+      [
+        upper_and_lower_ranges + [
+          map_range.lower_range_for(source_range),
+          map_range.upper_range_for(source_range)
+        ].compact,
+        destination_ranges + [
+          map_range.destination_range_for(source_range)
+        ].compact
+      ]
+    end
   end
 end
 
@@ -52,8 +146,8 @@ Almanac = Data.define(:seeds, :maps) do
 
     maps = map_arrays.map do |map_array|
       ranges = map_array.map do |map_line|
-        destination, source, length = map_line
-        MapRange.new(destination:, source:, length:)
+        destination_begin, source_begin, length = map_line
+        MapRange.new(destination_begin:, source_begin:, length:)
       end
 
       Map.new(ranges:)
@@ -67,13 +161,19 @@ Almanac = Data.define(:seeds, :maps) do
   end
 
   def location_for_seed(seed)
-    value = seed
+    maps.reduce(seed) { |acc, map| map.corresponding_for(acc) }
+  end
 
-    maps.each do |map|
-      value = map.corresponding_for(value)
-    end
+  def seed_ranges
+    seeds.each_slice(2).map { |start, length| start..start + length - 1 }
+  end
 
-    value
+  def lowest_location_for_seed_ranges
+    location_ranges_for_ranges(seed_ranges).map(&:first).min
+  end
+
+  def location_ranges_for_ranges(ranges)
+    maps.reduce(ranges) { |acc, map| map.corresponding_ranges(acc) }
   end
 end
 
@@ -82,7 +182,7 @@ def process(content)
 
   puts "Part 1: #{almanac.lowest_location_for_seeds}"
 
-  puts "Part 2: #{nil.inspect}"
+  puts "Part 2: #{almanac.lowest_location_for_seed_ranges}"
 end
 
 process(content)
