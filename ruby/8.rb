@@ -95,6 +95,11 @@ DesertMap = Data.define(:instructions, :network, :ghost_start_nodes) do
     count
   end
 
+  # I figured this out by using `brute_force_steps_to_traverse_as_ghost` and
+  # making a conjecture given the printed output. I don't fully understand why
+  # it works though - why are the 'Z' nodes found at regular intervals?
+  # I get that when traversing the network you have to cycle eventually, but
+  # couldn't you reach a 'Z' node multiple times in a single cycle?
   def steps_to_traverse_as_ghost
     steps_array = ghost_start_nodes.map do |node_id|
       steps_to_traverse(node_id) do |node_id_to_check|
