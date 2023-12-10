@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '2023'
-require_relative '../cli'
 
 NodeChildren = Data.define(:left, :right)
 

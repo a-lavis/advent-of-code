@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '2023'
-require_relative '../cli'
 
 Round = Data.define(:red_count, :green_count, :blue_count) do
   def self.from_string(stringy)

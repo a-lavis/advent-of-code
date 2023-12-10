@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '2023'
-require_relative '../cli'
 
 # -----------------------------------------------------------------------------
 # `Range#count` is only performant enough for Part 2 on Ruby >= v3.3

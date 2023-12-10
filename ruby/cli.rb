@@ -17,7 +17,11 @@ module CLI
     suffix = argv[1]
     suffix = "-#{suffix}" if suffix
 
-    filename = "../../#{type}s/#{YEAR}/#{day}#{suffix}.txt"
+    *repo_path_directories, _ = __dir__.split('/')
+
+    repo_path = repo_path_directories.join('/')
+
+    filename = "#{repo_path}/#{type}s/#{YEAR}/#{day}#{suffix}.txt"
     raise "File does not exist: #{filename}" unless File.exist?(filename)
 
     file = File.open(filename)

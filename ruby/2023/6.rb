@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '2023'
-require_relative '../cli'
 
 Race = Data.define(:time, :distance_record) do
   def win?(speed)

@@ -3,3 +3,5 @@
 module CLI
   YEAR = 2023
 end
+
+require_relative '../cli'

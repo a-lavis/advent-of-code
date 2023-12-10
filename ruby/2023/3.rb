@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '2023'
-require_relative '../cli'
 
 # A schematic, with methods for processing the grid data
 class Schematic
