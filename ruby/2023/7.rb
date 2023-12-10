@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 module Type
   FIVE_OK = 6
@@ -132,7 +133,7 @@ CamelCards = Struct.new(:hands) do
   end
 end
 
-camel_cards = CamelCards.from_lines(CLI.file_lines)
+camel_cards = CamelCards.from_lines(CLI.file_lines(7))
 
 camel_cards.sort!
 

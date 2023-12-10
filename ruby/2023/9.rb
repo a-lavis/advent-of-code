@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative '2023'
 require_relative '../cli'
 
 Sequence = Data.define(:numbers) do
@@ -41,6 +42,6 @@ Sequence = Data.define(:numbers) do
   end
 end
 
-sequences = CLI.file_lines.map { |line| Sequence.from_line(line) }
+sequences = CLI.file_lines(9).map { |line| Sequence.from_line(line) }
 puts "Part 1: #{sequences.map(&:next_value).sum}"
 puts "Part 2: #{sequences.map(&:previous_value).sum}"

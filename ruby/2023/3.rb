@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 # A schematic, with methods for processing the grid data
 class Schematic
@@ -104,7 +105,7 @@ class Schematic
   end
 end
 
-grid = CLI.file_lines.map { |line| line.chars.filter { |c| c != "\n" } }
+grid = CLI.file_lines(3).map { |line| line.chars.filter { |c| c != "\n" } }
 schematic = Schematic.new(grid)
 
 puts "Part 1: #{schematic.part_number_sum}"

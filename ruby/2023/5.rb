@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 # -----------------------------------------------------------------------------
 # `Range#count` is only performant enough for Part 2 on Ruby >= v3.3
@@ -192,7 +193,7 @@ Almanac = Data.define(:seeds, :maps) do
   end
 end
 
-almanac = Almanac.from_lines(CLI.file_lines)
+almanac = Almanac.from_lines(CLI.file_lines(5))
 
 puts "Part 1: #{almanac.lowest_location_for_seeds}"
 

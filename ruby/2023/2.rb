@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 Round = Data.define(:red_count, :green_count, :blue_count) do
   def self.from_string(stringy)
@@ -59,7 +60,7 @@ Game = Data.define(:id, :rounds) do
   end
 end
 
-games = CLI.file_lines.map { |s| Game.from_line(s) }
+games = CLI.file_lines(2).map { |s| Game.from_line(s) }
 
 part_one = games
            .filter(&:possible?)

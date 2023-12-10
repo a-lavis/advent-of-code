@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 Card = Struct.new(:winning_numbers, :card_numbers) do
   attr_accessor :count
@@ -47,7 +48,7 @@ Card = Struct.new(:winning_numbers, :card_numbers) do
   end
 end
 
-cards = CLI.file_lines.map { |s| Card.from_line(s) }
+cards = CLI.file_lines(4).map { |s| Card.from_line(s) }
 
 points = cards.map(&:points).sum
 

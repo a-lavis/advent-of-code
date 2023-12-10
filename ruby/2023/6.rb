@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 Race = Data.define(:time, :distance_record) do
   def win?(speed)
@@ -56,7 +57,7 @@ BoatDocument = Data.define(:races) do
   end
 end
 
-lines = CLI.file_lines
+lines = CLI.file_lines(6)
 
 boat_document = BoatDocument.from_lines(lines)
 

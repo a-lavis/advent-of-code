@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative '2023'
 require_relative '../cli'
 
 NodeChildren = Data.define(:left, :right)
@@ -101,7 +102,7 @@ DesertMap = Data.define(:instructions, :network, :ghost_start_nodes) do
   end
 end
 
-desert_map = DesertMap.from_lines(CLI.file_lines)
+desert_map = DesertMap.from_lines(CLI.file_lines(8))
 
 steps_to_traverse_from_aaa = desert_map.steps_to_traverse('AAA') do |node_id|
   node_id == 'ZZZ'

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require '../cli'
+require_relative '2023'
+require_relative '../cli'
 
 STRING_TO_DIGIT = {
   'one' => '1',
@@ -35,7 +36,7 @@ def get_calibration_value(stringy)
   STRING_TO_DIGIT.fetch(digits[0]) + STRING_TO_DIGIT.fetch(digits[-1])
 end
 
-part2 = CLI.file_lines
+part2 = CLI.file_lines(1)
            .map { |s| get_calibration_value(s) }
            .map { |s| Integer(s) }
            .sum
