@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 # A schematic, with methods for processing the grid data
 class Schematic
@@ -114,12 +104,8 @@ class Schematic
   end
 end
 
-def process(content)
-  grid = content.map { |line| line.chars.filter { |c| c != "\n" } }
-  schematic = Schematic.new(grid)
+grid = CLI.file_lines.map { |line| line.chars.filter { |c| c != "\n" } }
+schematic = Schematic.new(grid)
 
-  puts "Part 1: #{schematic.part_number_sum}"
-  puts "Part 2: #{schematic.sum_gear_index}"
-end
-
-process(content)
+puts "Part 1: #{schematic.part_number_sum}"
+puts "Part 2: #{schematic.sum_gear_index}"

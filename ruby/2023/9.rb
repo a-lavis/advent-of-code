@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require_relative '../cli'
 
 Sequence = Data.define(:numbers) do
   def self.from_line(line)
@@ -51,10 +41,6 @@ Sequence = Data.define(:numbers) do
   end
 end
 
-def process(content)
-  sequences = content.map { |line| Sequence.from_line(line) }
-  puts "Part 1: #{sequences.map(&:next_value).sum}"
-  puts "Part 2: #{sequences.map(&:previous_value).sum}"
-end
-
-process(content)
+sequences = CLI.file_lines.map { |line| Sequence.from_line(line) }
+puts "Part 1: #{sequences.map(&:next_value).sum}"
+puts "Part 2: #{sequences.map(&:previous_value).sum}"

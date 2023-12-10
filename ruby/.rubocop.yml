@@ -12,3 +12,6 @@
 AllCops:
   NewCops: enable
   TargetRubyVersion: 3.2
+
+Metrics:
+  Enabled: false

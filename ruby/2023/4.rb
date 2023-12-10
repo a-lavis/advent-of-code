@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 Card = Struct.new(:winning_numbers, :card_numbers) do
   attr_accessor :count
@@ -57,26 +47,22 @@ Card = Struct.new(:winning_numbers, :card_numbers) do
   end
 end
 
-def process(content)
-  cards = content.map { |s| Card.from_line(s) }
+cards = CLI.file_lines.map { |s| Card.from_line(s) }
 
-  points = cards.map(&:points).sum
+points = cards.map(&:points).sum
 
-  puts "Part 1: #{points}"
+puts "Part 1: #{points}"
 
-  cards.each_with_index do |card, index|
-    cards[index + 1, card.numbers_we_won_count].each do |other_card|
-      other_card.count += card.count
-    end
+cards.each_with_index do |card, index|
+  cards[index + 1, card.numbers_we_won_count].each do |other_card|
+    other_card.count += card.count
   end
-
-  points = cards.map(&:count).sum
-
-  puts "Part 2: #{points}"
-
-  points = cards.map(&:points).sum
-
-  puts "Bonus! Points for all scorecards: #{points}"
 end
 
-process(content)
+points = cards.map(&:count).sum
+
+puts "Part 2: #{points}"
+
+points = cards.map(&:points).sum
+
+puts "Bonus! Points for all scorecards: #{points}"

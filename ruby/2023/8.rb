@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require_relative '../cli'
 
 NodeChildren = Data.define(:left, :right)
 
@@ -111,15 +101,11 @@ DesertMap = Data.define(:instructions, :network, :ghost_start_nodes) do
   end
 end
 
-def process(content)
-  desert_map = DesertMap.from_lines(content)
+desert_map = DesertMap.from_lines(CLI.file_lines)
 
-  steps_to_traverse_from_aaa = desert_map.steps_to_traverse('AAA') do |node_id|
-    node_id == 'ZZZ'
-  end
-
-  puts "Part 1: #{steps_to_traverse_from_aaa}"
-  puts "Part 2: #{desert_map.steps_to_traverse_as_ghost}"
+steps_to_traverse_from_aaa = desert_map.steps_to_traverse('AAA') do |node_id|
+  node_id == 'ZZZ'
 end
 
-process(content)
+puts "Part 1: #{steps_to_traverse_from_aaa}"
+puts "Part 2: #{desert_map.steps_to_traverse_as_ghost}"

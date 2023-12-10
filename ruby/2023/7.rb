@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 module Type
   FIVE_OK = 6
@@ -142,17 +132,13 @@ CamelCards = Struct.new(:hands) do
   end
 end
 
-def process(content)
-  camel_cards = CamelCards.from_lines(content)
+camel_cards = CamelCards.from_lines(CLI.file_lines)
 
-  camel_cards.sort!
+camel_cards.sort!
 
-  puts "Part 1: #{camel_cards.total_winnings}"
+puts "Part 1: #{camel_cards.total_winnings}"
 
-  camel_cards.jokerify!
-  camel_cards.sort!
+camel_cards.jokerify!
+camel_cards.sort!
 
-  puts "Part 2: #{camel_cards.total_winnings}"
-end
-
-process(content)
+puts "Part 2: #{camel_cards.total_winnings}"

@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 Round = Data.define(:red_count, :green_count, :blue_count) do
   def self.from_string(stringy)
@@ -69,21 +59,17 @@ Game = Data.define(:id, :rounds) do
   end
 end
 
-def process(content)
-  games = content.map { |s| Game.from_line(s) }
+games = CLI.file_lines.map { |s| Game.from_line(s) }
 
-  part_one = games
-             .filter(&:possible?)
-             .map(&:id)
-             .sum
+part_one = games
+           .filter(&:possible?)
+           .map(&:id)
+           .sum
 
-  puts "Part One: #{part_one}"
+puts "Part One: #{part_one}"
 
-  part_two = games
-             .map(&:power_of_minimum_set)
-             .sum
+part_two = games
+           .map(&:power_of_minimum_set)
+           .sum
 
-  puts "Part One: #{part_two}"
-end
-
-process(content)
+puts "Part One: #{part_two}"

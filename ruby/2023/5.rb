@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 # -----------------------------------------------------------------------------
 # `Range#count` is only performant enough for Part 2 on Ruby >= v3.3
@@ -202,12 +192,8 @@ Almanac = Data.define(:seeds, :maps) do
   end
 end
 
-def process(content)
-  almanac = Almanac.from_lines(content)
+almanac = Almanac.from_lines(CLI.file_lines)
 
-  puts "Part 1: #{almanac.lowest_location_for_seeds}"
+puts "Part 1: #{almanac.lowest_location_for_seeds}"
 
-  puts "Part 2: #{almanac.lowest_location_for_seed_ranges}"
-end
-
-process(content)
+puts "Part 2: #{almanac.lowest_location_for_seed_ranges}"

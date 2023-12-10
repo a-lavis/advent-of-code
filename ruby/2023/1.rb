@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 STRING_TO_DIGIT = {
   'one' => '1',
@@ -45,11 +35,9 @@ def get_calibration_value(stringy)
   STRING_TO_DIGIT.fetch(digits[0]) + STRING_TO_DIGIT.fetch(digits[-1])
 end
 
-def process(content)
-  content
-    .map { |s| get_calibration_value(s) }
-    .map { |s| Integer(s) }
-    .sum
-end
+part2 = CLI.file_lines
+           .map { |s| get_calibration_value(s) }
+           .map { |s| Integer(s) }
+           .sum
 
-puts process(content)
+puts "Part 2: #{part2}"

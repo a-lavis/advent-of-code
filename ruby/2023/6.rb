@@ -1,16 +1,6 @@
 # frozen_string_literal: true
 
-argv = ARGV
-
-raise 'I need exactly one argument' if argv.length != 1
-
-filename = argv[0]
-
-raise 'First argument must be a filename of a file that exists' unless File.exist?(filename)
-
-file = File.open(filename)
-content = file.readlines
-file.close
+require '../cli'
 
 Race = Data.define(:time, :distance_record) do
   def win?(speed)
@@ -66,19 +56,17 @@ BoatDocument = Data.define(:races) do
   end
 end
 
-def process(content)
-  boat_document = BoatDocument.from_lines(content)
+lines = CLI.file_lines
 
-  puts "Part 1: #{boat_document.product_of_ways_to_win_counts}"
+boat_document = BoatDocument.from_lines(lines)
 
-  time, distance_record = content.map do |line|
-    _, numbers_string = line.split(':')
-    Integer(numbers_string.split.join)
-  end
+puts "Part 1: #{boat_document.product_of_ways_to_win_counts}"
 
-  unkerned_race = Race.new(time:, distance_record:)
-
-  puts "Part 2: #{unkerned_race.ways_to_win_count}"
+time, distance_record = lines.map do |line|
+  _, numbers_string = line.split(':')
+  Integer(numbers_string.split.join)
 end
 
-process(content)
+unkerned_race = Race.new(time:, distance_record:)
+
+puts "Part 2: #{unkerned_race.ways_to_win_count}"
