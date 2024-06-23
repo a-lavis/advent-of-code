@@ -69,30 +69,21 @@ dayOne : Str -> Task {} _
 dayOne = \content ->
     lines = List.dropIf (Str.split content "\n") Str.isEmpty
     sum = List.walk lines 0 \acc, line ->
-        acc + getCalibrationValue line
+        when getCalibrationValue line is
+            Ok value -> acc + value
+            Err _ -> crash "Couldn't get the calibration value"
     Stdout.line! (Num.toStr sum)
 
-getCalibrationValueFromFirstAndLast = \first, last ->
-    calibrationValueString =
-        when Str.fromUtf8 [first, last] is
-            Ok str -> str
-            Err _ -> crash "Couldn't parse the number"
-    when Str.toU64 calibrationValueString is
-        Ok num -> num
-        Err _ -> crash "Couldn't parse the number"
-
-getCalibrationValue : Str -> U64
+getCalibrationValue : Str -> Result U64 _
 getCalibrationValue = \line ->
     intList = Str.toUtf8 line
-    first =
-        when getFirstDigit intList is
-            Ok digit -> digit
-            Err _ -> crash "No first digit found"
-    last =
-        when getLastDigit intList is
-            Ok digit -> digit
-            Err _ -> crash "No last digit found"
+    first <- getFirstDigit intList |> Result.try
+    last <- getLastDigit intList |> Result.try
     getCalibrationValueFromFirstAndLast first last
+
+getCalibrationValueFromFirstAndLast = \first, last ->
+    calibrationValueString <- Str.fromUtf8 [first, last] |> Result.try
+    Str.toU64 calibrationValueString
 
 getFirstDigit : List U8 -> Result U8 _
 getFirstDigit = \intList ->
@@ -138,34 +129,29 @@ getDigit = \initialIntList, getFromListFunc, dropFromListFunc, concatFunc, findF
 dayTwo : Str -> Task {} _
 dayTwo = \content ->
     lines = List.dropIf (Str.split content "\n") Str.isEmpty
-    games = List.map lines createGame
+    games =
+        when List.mapTry lines createGame is
+            Ok list -> list
+            Err _ -> crash "Couldn't create the games"
     Stdout.line! "Part One: $(Num.toStr (dayTwoPartOne games))"
     Stdout.line! "Part Two: $(Num.toStr (dayTwoPartTwo games))"
 
 Round : { redCount : I64, greenCount : I64, blueCount : I64 }
 Game : { id : I64, rounds : List Round }
 
-createGame : Str -> Game
+createGame : Str -> Result Game _
 createGame = \line ->
-    when Str.splitFirst line ":" is
-        Ok result ->
-            gameString = result.before
-            roundsString = result.after
-            id = getGameId gameString
-            rounds = getRounds roundsString
-            { id, rounds }
+    result <- Str.splitFirst line ":" |> Result.try
+    gameString = result.before
+    roundsString = result.after
+    id <- getGameId gameString |> Result.try
+    rounds = getRounds roundsString
+    Ok { id, rounds }
 
-        Err _ -> crash "Couldn't split the line"
-
-getGameId : Str -> I64
+getGameId : Str -> Result I64 _
 getGameId = \gameString ->
-    when Str.splitFirst gameString " " is
-        Ok result ->
-            when Str.toI64 result.after is
-                Ok num -> num
-                Err _ -> crash "Couldn't parse the game id"
-
-        Err _ -> crash "Couldn't split the game id"
+    result <- Str.splitFirst gameString " " |> Result.try
+    Str.toI64 result.after
 
 getRounds : Str -> List Round
 getRounds = \roundsString ->
