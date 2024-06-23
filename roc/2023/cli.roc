@@ -134,7 +134,11 @@ dayTwo = \content ->
             Ok list -> list
             Err _ -> crash "Couldn't create the games"
     Stdout.line! "Part One: $(Num.toStr (dayTwoPartOne games))"
-    Stdout.line! "Part Two: $(Num.toStr (dayTwoPartTwo games))"
+    partTwo =
+        when dayTwoPartTwo games is
+            Ok value -> value
+            Err _ -> crash "Couldn't get the part two value"
+    Stdout.line! "Part Two: $(Num.toStr partTwo)"
 
 Round : { redCount : I64, greenCount : I64, blueCount : I64 }
 Game : { id : I64, rounds : List Round }
@@ -145,7 +149,7 @@ createGame = \line ->
     gameString = result.before
     roundsString = result.after
     id <- getGameId gameString |> Result.try
-    rounds = getRounds roundsString
+    rounds <- getRounds roundsString |> Result.try
     Ok { id, rounds }
 
 getGameId : Str -> Result I64 _
@@ -153,29 +157,23 @@ getGameId = \gameString ->
     result <- Str.splitFirst gameString " " |> Result.try
     Str.toI64 result.after
 
-getRounds : Str -> List Round
+getRounds : Str -> Result (List Round) _
 getRounds = \roundsString ->
     roundStrings = Str.split roundsString ";"
-    List.map roundStrings createRound
+    List.mapTry roundStrings createRound
 
-createRound : Str -> Round
+createRound : Str -> Result Round _
 createRound = \roundString ->
-    List.walk (Str.split roundString ",") { redCount: 0, greenCount: 0, blueCount: 0 } \acc, colorString ->
-        when Str.splitFirst (Str.trim colorString) " " is
-            Ok result ->
-                color = result.after
-                countString = result.before
-                count =
-                    when Str.toI64 countString is
-                        Ok num -> num
-                        Err _ -> crash "Couldn't parse the count"
-                when color is
-                    "red" -> { acc & redCount: acc.redCount + count }
-                    "green" -> { acc & greenCount: acc.greenCount + count }
-                    "blue" -> { acc & blueCount: acc.blueCount + count }
-                    _ -> crash "Invalid color"
-
-            Err _ -> crash "Couldn't split the color and count"
+    List.walk (Str.split roundString ",") (Ok { redCount: 0, greenCount: 0, blueCount: 0 }) \accResult, colorString ->
+        acc <- accResult |> Result.try
+        result <- Str.splitFirst (Str.trim colorString) " " |> Result.try
+        color = result.after
+        count <- Str.toI64 result.before |> Result.try
+        when color is
+            "red" -> Ok { acc & redCount: acc.redCount + count }
+            "green" -> Ok { acc & greenCount: acc.greenCount + count }
+            "blue" -> Ok { acc & blueCount: acc.blueCount + count }
+            _ -> Err (InvalidColorErr "Invalid color found: $(color)")
 
 dayTwoPartOne : List Game -> I64
 dayTwoPartOne = \games ->
@@ -192,25 +190,22 @@ isRoundPossible : Round -> Bool
 isRoundPossible = \round ->
     (round.redCount <= 12) && (round.greenCount <= 13) && (round.blueCount <= 14)
 
-dayTwoPartTwo : List Game -> I64
+dayTwoPartTwo : List Game -> Result I64 _
 dayTwoPartTwo = \games ->
-    games
-    |> List.map powerOfMinmumSet
-    |> List.sum
+    powers <- List.mapTry games powerOfMinmumSet |> Result.try
+    Ok (List.sum powers)
 
-powerOfMinmumSet : Game -> I64
+powerOfMinmumSet : Game -> Result I64 _
 powerOfMinmumSet = \game ->
-    greatestRed = getGreatestColorCount game .redCount
-    greatestGreen = getGreatestColorCount game .greenCount
-    greatestBlue = getGreatestColorCount game .blueCount
+    greatestRed <- getGreatestColorCount game .redCount |> Result.try
+    greatestGreen <- getGreatestColorCount game .greenCount |> Result.try
+    greatestBlue <- getGreatestColorCount game .blueCount |> Result.try
 
-    greatestRed * greatestGreen * greatestBlue
+    Ok (greatestRed * greatestGreen * greatestBlue)
 
-getGreatestColorCount : Game, (Round -> I64) -> I64
+getGreatestColorCount : Game, (Round -> I64) -> Result I64 _
 getGreatestColorCount = \game, getColorCountFunc ->
-    when game.rounds |> List.map getColorCountFunc |> List.max is
-        Ok num -> num
-        Err _ -> crash "Couldn't get the greatest color count"
+    game.rounds |> List.map getColorCountFunc |> List.max
 
 # ----------------------------------------------------------------------------
 # Day Three
