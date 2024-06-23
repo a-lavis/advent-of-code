@@ -86,41 +86,37 @@ getCalibrationValue = \line ->
 
 getFirstDigit : List U8 -> Result U8 _
 getFirstDigit = \intList ->
-    getDigit intList List.first List.dropFirst Str.concat Str.endsWith
+    getDigit intList List.first List.dropFirst List.append Str.endsWith
 
 getLastDigit : List U8 -> Result U8 _
 getLastDigit = \intList ->
-    getDigit intList List.last List.dropLast (\s1, s2 -> Str.concat s2 s1) Str.startsWith
+    getDigit intList List.last List.dropLast List.prepend Str.startsWith
 
-getDigit : List U8, (List U8 -> Result U8 _), (List U8, U64 -> List U8), (Str, Str -> Str), (Str, Str -> Bool) -> Result U8 _
+getDigit : List U8, (List U8 -> Result U8 _), (List U8, U64 -> List U8), (List U8, U8 -> List U8), (Str, Str -> Bool) -> Result U8 _
 getDigit = \initialIntList, getFromListFunc, dropFromListFunc, concatFunc, findFunc ->
     getDigitAcc = \intList, acc ->
-        if findFunc acc "one" then
+        accString <- Str.fromUtf8 acc |> Result.try
+        if findFunc accString "one" then
             Ok '1'
-        else if findFunc acc "two" then
+        else if findFunc accString "two" then
             Ok '2'
-        else if findFunc acc "three" then
+        else if findFunc accString "three" then
             Ok '3'
-        else if findFunc acc "four" then
+        else if findFunc accString "four" then
             Ok '4'
-        else if findFunc acc "five" then
+        else if findFunc accString "five" then
             Ok '5'
-        else if findFunc acc "six" then
+        else if findFunc accString "six" then
             Ok '6'
-        else if findFunc acc "seven" then
+        else if findFunc accString "seven" then
             Ok '7'
-        else if findFunc acc "eight" then
+        else if findFunc accString "eight" then
             Ok '8'
-        else if findFunc acc "nine" then
+        else if findFunc accString "nine" then
             Ok '9'
         else
             char <- getFromListFunc intList |> Result.try
             when char is
                 '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> Ok char
-                _ ->
-                    # an idea - maybe I could have the `acc` be a list of U8s, and then I could just append the char to it.
-                    # then we could convert the list to a string each time we need to check if it has a number.
-                    # this way we might be able to support (ignore) multi-byte characters.
-                    charString <- Str.fromUtf8 [char] |> Result.try
-                    getDigitAcc (dropFromListFunc intList 1) (concatFunc acc charString)
-    getDigitAcc initialIntList ""
+                _ -> getDigitAcc (dropFromListFunc intList 1) (concatFunc acc char)
+    getDigitAcc initialIntList []
