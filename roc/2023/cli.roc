@@ -47,6 +47,7 @@ main =
             function =
                 when data.day is
                     1 -> dayOne
+                    2 -> dayTwo
                     _ -> \_ -> Stdout.line! "Can't do this lol"
 
             function content
@@ -56,6 +57,7 @@ main =
 
             Task.err (Exit 1 "")
 
+dayOne : Str -> Task {} _
 dayOne = \content ->
     lines = List.dropIf (Str.split content "\n") Str.isEmpty
     sum = List.walk lines 0 \acc, line ->
@@ -120,3 +122,94 @@ getDigit = \initialIntList, getFromListFunc, dropFromListFunc, concatFunc, findF
                 '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> Ok char
                 _ -> getDigitAcc (dropFromListFunc intList 1) (concatFunc acc char)
     getDigitAcc initialIntList []
+
+dayTwo : Str -> Task {} _
+dayTwo = \content ->
+    lines = List.dropIf (Str.split content "\n") Str.isEmpty
+    games = List.map lines createGame
+    Stdout.line! "Part One: $(Num.toStr (dayTwoPartOne games))"
+    Stdout.line! "Part Two: $(Num.toStr (dayTwoPartTwo games))"
+
+Round : { redCount : I64, greenCount : I64, blueCount : I64 }
+Game : { id : I64, rounds : List Round }
+
+createGame : Str -> Game
+createGame = \line ->
+    when Str.splitFirst line ":" is
+        Ok result ->
+            gameString = result.before
+            roundsString = result.after
+            id = getGameId gameString
+            rounds = getRounds roundsString
+            { id, rounds }
+
+        Err _ -> crash "Couldn't split the line"
+
+getGameId : Str -> I64
+getGameId = \gameString ->
+    when Str.splitFirst gameString " " is
+        Ok result ->
+            when Str.toI64 result.after is
+                Ok num -> num
+                Err _ -> crash "Couldn't parse the game id"
+
+        Err _ -> crash "Couldn't split the game id"
+
+getRounds : Str -> List Round
+getRounds = \roundsString ->
+    roundStrings = Str.split roundsString ";"
+    List.map roundStrings createRound
+
+createRound : Str -> Round
+createRound = \roundString ->
+    List.walk (Str.split roundString ",") { redCount: 0, greenCount: 0, blueCount: 0 } \acc, colorString ->
+        when Str.splitFirst (Str.trim colorString) " " is
+            Ok result ->
+                color = result.after
+                countString = result.before
+                count =
+                    when Str.toI64 countString is
+                        Ok num -> num
+                        Err _ -> crash "Couldn't parse the count"
+                when color is
+                    "red" -> { acc & redCount: acc.redCount + count }
+                    "green" -> { acc & greenCount: acc.greenCount + count }
+                    "blue" -> { acc & blueCount: acc.blueCount + count }
+                    _ -> crash "Invalid color"
+
+            Err _ -> crash "Couldn't split the color and count"
+
+dayTwoPartOne : List Game -> I64
+dayTwoPartOne = \games ->
+    games
+    |> List.keepIf isGamePossible
+    |> List.map .id
+    |> List.sum
+
+isGamePossible : Game -> Bool
+isGamePossible = \game ->
+    List.all game.rounds isRoundPossible
+
+isRoundPossible : Round -> Bool
+isRoundPossible = \round ->
+    (round.redCount <= 12) && (round.greenCount <= 13) && (round.blueCount <= 14)
+
+dayTwoPartTwo : List Game -> I64
+dayTwoPartTwo = \games ->
+    games
+    |> List.map powerOfMinmumSet
+    |> List.sum
+
+powerOfMinmumSet : Game -> I64
+powerOfMinmumSet = \game ->
+    greatestRed = getGreatestColorCount game .redCount
+    greatestGreen = getGreatestColorCount game .greenCount
+    greatestBlue = getGreatestColorCount game .blueCount
+
+    greatestRed * greatestGreen * greatestBlue
+
+getGreatestColorCount : Game, (Round -> I64) -> I64
+getGreatestColorCount = \game, getColorCountFunc ->
+    when game.rounds |> List.map getColorCountFunc |> List.max is
+        Ok num -> num
+        Err _ -> crash "Couldn't get the greatest color count"
