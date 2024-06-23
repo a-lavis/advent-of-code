@@ -12,6 +12,10 @@ import weaver.Cli
 import weaver.Param
 import weaver.Opt
 
+# ----------------------------------------------------------------------------
+# Main
+# ----------------------------------------------------------------------------
+
 cliParser =
     Cli.weave {
         isInput: <- Opt.flag { short: "i", help: "Run on the input instead of the example" },
@@ -56,6 +60,10 @@ main =
             Stdout.line! message
 
             Task.err (Exit 1 "")
+
+# ----------------------------------------------------------------------------
+# Day One
+# ----------------------------------------------------------------------------
 
 dayOne : Str -> Task {} _
 dayOne = \content ->
@@ -122,6 +130,10 @@ getDigit = \initialIntList, getFromListFunc, dropFromListFunc, concatFunc, findF
                 '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' -> Ok char
                 _ -> getDigitAcc (dropFromListFunc intList 1) (concatFunc acc char)
     getDigitAcc initialIntList []
+
+# ----------------------------------------------------------------------------
+# Day Two
+# ----------------------------------------------------------------------------
 
 dayTwo : Str -> Task {} _
 dayTwo = \content ->
@@ -213,3 +225,7 @@ getGreatestColorCount = \game, getColorCountFunc ->
     when game.rounds |> List.map getColorCountFunc |> List.max is
         Ok num -> num
         Err _ -> crash "Couldn't get the greatest color count"
+
+# ----------------------------------------------------------------------------
+# Day Three
+# ----------------------------------------------------------------------------
