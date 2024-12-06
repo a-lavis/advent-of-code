@@ -52,6 +52,7 @@ main =
                 when data.day is
                     1 -> dayOne
                     2 -> dayTwo
+                    3 -> dayThree
                     _ -> \_ -> Stdout.line! "Can't do this lol"
 
             function content
@@ -210,3 +211,114 @@ getGreatestColorCount = \game, getColorCountFunc ->
 # ----------------------------------------------------------------------------
 # Day Three
 # ----------------------------------------------------------------------------
+
+dayThree : Str -> Task {} _
+dayThree = \content ->
+    lines = List.dropIf (Str.split content "\n") Str.isEmpty
+    grid = List.map lines \line -> line |> Str.trim |> Str.toUtf8
+    result = readSchematic grid
+    Stdout.line! "Part One: $(Num.toStr result.sum)"
+
+Gear : { column : U64, row : U64 }
+
+readSchematic : List (List U8) -> { sum : U64, gearIndex : Dict U64 (Dict U64 (List U64)) }
+readSchematic = \grid ->
+    List.walkWithIndex grid { sum: 0, gearIndex: Dict.empty {} } \acc, line, row ->
+        result = List.walkWithIndex line { sum: acc.sum, gearIndex: acc.gearIndex, numberString: "", partNumber: Bool.false, currentGears: [] } \rowState, char, column ->
+            when char is
+                '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ->
+                    charString =
+                        when Str.fromUtf8 [char] is
+                            Ok value -> value
+                            Err _ -> crash "Couldn't convert char to string"
+                    adjacencyCheck = isSymbolAdjacent grid column row rowState.currentGears
+                    { rowState &
+                        numberString: Str.concat rowState.numberString charString,
+                        partNumber: rowState.partNumber || adjacencyCheck.isAdjacent,
+                        currentGears: adjacencyCheck.currentGears,
+                    }
+
+                _ ->
+                    if rowState.partNumber then
+                        number =
+                            when Str.toU64 rowState.numberString is
+                                Ok value -> value
+                                Err _ -> crash "Couldn't convert number to U64"
+                        {
+                            sum: rowState.sum + number,
+                            gearIndex: addPartNumberToGearIndex rowState.gearIndex rowState.currentGears number,
+                            numberString: "",
+                            partNumber: Bool.false,
+                            currentGears: [],
+                        }
+                    else
+                        { rowState & numberString: "", partNumber: Bool.false, currentGears: [] }
+        if result.partNumber then
+            number =
+                when Str.toU64 result.numberString is
+                    Ok value -> value
+                    Err _ -> crash "Couldn't convert number to U64"
+            {
+                sum: result.sum + number,
+                gearIndex: addPartNumberToGearIndex result.gearIndex result.currentGears number,
+            }
+        else
+            { sum: result.sum, gearIndex: result.gearIndex }
+
+isSymbolAdjacent : List (List U8), U64, U64, List Gear -> { currentGears : List Gear, isAdjacent : Bool }
+isSymbolAdjacent = \grid, originalColumn, originalRow, currentGears ->
+    columns = if originalColumn <= 0 then
+        [originalColumn, originalColumn + 1]
+    else
+        [originalColumn - 1, originalColumn, originalColumn + 1]
+    rows = if originalRow <= 0 then
+        [originalRow, originalRow + 1]
+    else
+        [originalRow - 1, originalRow, originalRow + 1]
+
+    List.walkUntil columns { currentGears, isAdjacent: Bool.false } \colAcc, column ->
+        result = List.walkUntil rows { currentGears: colAcc.currentGears, isAdjacent: colAcc.isAdjacent } \rowAcc, row ->
+            if column == originalColumn && row == originalRow then
+                Continue rowAcc
+            else if outOfBounds grid column row then
+                Continue rowAcc
+            else
+                rowList =
+                    when List.get grid row is
+                        Ok value -> value
+                        Err _ -> crash "Couldn't get row"
+                char =
+                    when List.get rowList column is
+                        Ok value -> value
+                        Err _ -> crash "Couldn't get char"
+                when char is
+                    '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' -> Continue rowAcc
+                    '*' -> Break { currentGears: List.append rowAcc.currentGears { column, row }, isAdjacent: Bool.true }
+                    _ -> Break { rowAcc & isAdjacent: Bool.true }
+        if result.isAdjacent then
+            Break result
+        else
+            Continue result
+
+outOfBounds : List (List U8), U64, U64 -> Bool
+outOfBounds = \grid, column, row ->
+    if row > List.len grid - 1 then
+        Bool.true
+    else
+        rowList =
+            when List.get grid row is
+                Ok value -> value
+                Err _ -> crash "Couldn't get row"
+        if column > List.len rowList - 1 then
+            Bool.true
+        else
+            Bool.false
+
+addPartNumberToGearIndex : Dict U64 (Dict U64 (List U64)), List Gear, U64 -> Dict U64 (Dict U64 (List U64))
+addPartNumberToGearIndex = \gearIndex, gears, number ->
+    List.walk gears gearIndex \acc, gear ->
+        columnDict = acc |> Dict.get gear.column |> Result.withDefault (Dict.empty {})
+        rowList = columnDict |> Dict.get gear.row |> Result.withDefault []
+        newRowList = List.append rowList number
+        newColumnDict = Dict.insert columnDict gear.row newRowList
+        Dict.insert acc gear.column newColumnDict
