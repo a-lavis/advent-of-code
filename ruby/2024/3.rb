@@ -5,178 +5,188 @@ require_relative '2024'
 content = CLI.get_content(3)
 
 # ----------------------------------------------------------------------------
-# Part 1 - 
+# Part 1 -
 
+DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(&:to_s).freeze
 
-class Parser
-  DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(&:to_s).freeze
+def clear(state)
+  {
+    **state,
+    mode: :nothing,
+    first_operand: '',
+    second_operand: ''
+  }
+end
 
-  attr_reader :results
+def parse(chars, do_and_dont)
+  end_state = chars.reduce(
+    enabled: true,
+    mode: :nothing,
+    first_operand: '',
+    second_operand: '',
+    result: 0
+  ) do |state, char|
+    state => { enabled:, mode:, first_operand:, second_operand:, result: }
 
-  def initialize(chars, do_and_dont)
-    @chars = chars
-    @enabled = true
-    @mode = :nothing
-    @first_operand = +""
-    @second_operand = +""
-    @results = []
-    @do_and_dont = do_and_dont
-  end
-
-  def parse!
-    @chars.each { |char| parse_char!(char) }
-  end
-
-  def parse_char!(char)
-    case @mode
+    case mode
     when :nothing
       case char
       when 'm'
-        @mode = :m if @enabled
+        enabled ? { **state, mode: :m } : clear(state)
       when 'd'
-        @mode = :d
+        do_and_dont ? { **state, mode: :d } : clear(state)
       else
-        clear!
+        clear(state)
       end
     when :m
       case char
       when 'u'
-        @mode = :u
+        { **state, mode: :u }
       else
-        clear!
+        clear(state)
       end
     when :u
       case char
       when 'l'
-        @mode = :l
+        { **state, mode: :l }
       else
-        clear!
+        clear(state)
       end
     when :l
       case char
       when '('
-        @mode = :open_paren
+        { **state, mode: :open_paren }
       else
-        clear!
+        clear(state)
       end
     when :open_paren
       case char
       when *DIGITS
-        @mode = :first_operand
-        @first_operand << char
+        {
+          **state,
+          mode: :first_operand,
+          first_operand: "#{first_operand}#{char}"
+        }
       else
-        clear!
+        clear(state)
       end
     when :first_operand
       case char
       when *DIGITS
-        @first_operand << char
+        { **state, first_operand: "#{first_operand}#{char}" }
       when ','
-        @mode = :comma
+        { **state, mode: :comma }
       else
-        clear!
+        clear(state)
       end
     when :comma
       case char
       when *DIGITS
-        @mode = :second_operand
-        @second_operand << char
+        {
+          **state,
+          mode: :second_operand,
+          second_operand: "#{second_operand}#{char}"
+        }
       else
-        clear!
+        clear(state)
       end
     when :second_operand
       case char
       when *DIGITS
-        @second_operand << char
+        { **state, second_operand: "#{second_operand}#{char}" }
       when ')'
-        @results << [@first_operand, @second_operand]
-        clear!
+        {
+          **state,
+          result: result + (first_operand.to_i * second_operand.to_i),
+          first_operand: '',
+          second_operand: '',
+          mode: :nothing
+        }
       else
-        clear!
+        clear(state)
       end
     when :d
       case char
       when 'o'
-        @mode = :o if @do_and_dont
+        { **state, mode: :o }
       else
-        clear!
+        clear(state)
       end
     when :o
       case char
       when '('
-        @mode = :do_open_paren
+        { **state, mode: :do_open_paren }
       when 'n'
-        @mode = :n
+        { **state, mode: :n }
       else
-        clear!
+        clear(state)
       end
     when :do_open_paren
       case char
       when ')'
-        @enabled = true
-        clear!
+        {
+          **state,
+          enabled: true,
+          first_operand: '',
+          second_operand: '',
+          mode: :nothing
+        }
       else
-        clear!
+        clear(state)
       end
     when :n
       case char
       when "'"
-        @mode = :apostrophe
+        { **state, mode: :apostrophe }
       else
-        clear!
+        clear(state)
       end
     when :apostrophe
       case char
       when 't'
-        @mode = :t
+        { **state, mode: :t }
       else
-        clear!
+        clear(state)
       end
     when :t
       case char
       when '('
-        @mode = :dont_open_paren
+        { **state, mode: :dont_open_paren }
       else
-        clear!
+        clear(state)
       end
     when :dont_open_paren
       case char
       when ')'
-        @enabled = false
-        clear!
-      else 
-        clear!
+        {
+          **state,
+          enabled: false,
+          first_operand: '',
+          second_operand: '',
+          mode: :nothing
+        }
+      else
+        clear(state)
       end
     end
   end
 
-  def clear!
-    @mode = :nothing
-    @first_operand = +""
-    @second_operand = +""
-  end
+  end_state[:result]
 end
 
 chars = content.split('')
 
-part_1_parser = Parser.new(chars, false)
-part_1_parser.parse!
-
-part_1 = part_1_parser.results.sum { |a, b| a.to_i * b.to_i }
+part_1 = parse(chars, false)
 
 puts "Part 1 (): #{part_1}"
 
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
-# Part 2 - 
+# Part 2 -
 
-part_2_parser = Parser.new(chars, true)
-part_2_parser.parse!
-
-part_2 = part_2_parser.results.sum { |a, b| a.to_i * b.to_i }
+part_2 = parse(chars, true)
 
 puts "Part 2 (): #{part_2}"
 
 # ----------------------------------------------------------------------------
-
