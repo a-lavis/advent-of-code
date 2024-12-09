@@ -31,20 +31,18 @@ Y_BOUND = starting_lines.length
 X_BOUND = starting_lines[0].length
 
 def patrol(lines)
-  (0..).reduce({
-    ls: lines,
-    direction: STARTING_DIRECTION,
-    x: STARTING_X,
-    y: STARTING_Y,
-    vectors: Set[]
-  }) do |state, _|
-    state => { ls:, direction:, x:, y:, vectors: }
+  ls = lines
+  direction = STARTING_DIRECTION
+  x = STARTING_X
+  y = STARTING_Y
+  vectors = Set[]
 
+  while true do
     vector = { direction:, x:, y: }
 
     break { loop: true, vectors: nil } if vectors.include?(vector)
 
-    new_vectors = Set[ *vectors, vector ]
+    vectors = Set[ *vectors, vector ]
 
     case direction
     when LEFT
@@ -58,26 +56,16 @@ def patrol(lines)
     end => [new_direction, new_x, new_y]
     
     if !(0 <= new_y && new_y < Y_BOUND && 0 <= new_x && new_x < X_BOUND)
-      break { loop: false, vectors: new_vectors }
+      break { loop: false, vectors: }
     end
 
     if ls[new_y][new_x] == '#'
-      next {
-        ls:,
-        direction: new_direction,
-        x:,
-        y:,
-        vectors: new_vectors
-      }
+      direction = new_direction
+      next
     end
-    
-    {
-      ls:,
-      direction:,
-      x: new_x,
-      y: new_y,
-      vectors: new_vectors
-    }
+
+    x = new_x
+    y = new_y
   end
 end
 
@@ -97,24 +85,29 @@ puts "Part 1 (): #{part_1}"
 # ----------------------------------------------------------------------------
 # Part 2 -
 
+i = 0
+coords_length = coords.length
+
 part_2 = coords.count do |coord|
   coord => { x:, y: }
 
+  i += 1
+  puts(
+    "x: #{x}, y: #{y}, progress: #{i}/#{coords_length} " \
+    "(#{((i.to_f/coords_length)*100).round(2)}%)"
+  )
+
   next false if x == STARTING_X && y == STARTING_Y
 
-  line = starting_lines[y]
+  starting_lines[y][x] = '#'
 
-  patrol(
-    [
-      *starting_lines.slice(...y),
-      [
-        *line.slice(...x),
-        '#',
-        *line.slice((x+1)..)
-      ].join,
-      *starting_lines.slice((y+1)..)
-    ]
+  result = patrol(
+    starting_lines
   )[:loop]
+
+  starting_lines[y][x] = '.'
+
+  result
 end
 
 puts "Part 2 (): #{part_2}"
