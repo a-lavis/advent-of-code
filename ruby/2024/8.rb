@@ -49,7 +49,38 @@ puts "Part 1 (): #{part_1}"
 # ----------------------------------------------------------------------------
 # Part 2 -
 
-part_2 = "TODO"
+part_2 = (0...HEIGHT).sum do |y|
+  (0...WIDTH).count do |x|
+    antennas.any? do |antenna|
+      point = antenna.point
+      next true if point.x == x && point.y == y
+
+      d_y = point.y - y
+      d_x = point.x - x
+      gcd = d_y.gcd(d_x)
+      d_y /= gcd
+      d_x /= gcd
+
+      i = 0
+      while true
+        new_y = y + (i * d_y)
+        break false unless 0 <= new_y && new_y < HEIGHT
+
+        new_x = x + (i * d_x)
+        break false unless 0 <= new_x && new_x < WIDTH
+
+        if (
+            lines[new_y][new_x] == antenna.frequency &&
+            !(new_y == point.y && new_x == point.x)
+        )
+          break true
+        end
+
+        i += 1
+      end
+    end
+  end
+end
 
 puts "Part 2 (): #{part_2}"
 
