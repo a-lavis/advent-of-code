@@ -61,22 +61,15 @@ part_2 = (0...HEIGHT).sum do |y|
       d_y /= gcd
       d_x /= gcd
 
-      i = 0
-      while true
+      (0..).any? do |i|
         new_y = y + (i * d_y)
         break false unless 0 <= new_y && new_y < HEIGHT
 
         new_x = x + (i * d_x)
         break false unless 0 <= new_x && new_x < WIDTH
 
-        if (
-            lines[new_y][new_x] == antenna.frequency &&
-            !(new_y == point.y && new_x == point.x)
-        )
-          break true
-        end
-
-        i += 1
+        lines[new_y][new_x] == antenna.frequency &&
+          !(new_y == point.y && new_x == point.x)
       end
     end
   end
